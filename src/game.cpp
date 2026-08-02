@@ -4,11 +4,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "cmp/position.hpp"
 #include "core/input.hpp"
 #include "gfx/primitives.hpp"
 #include "gfx/shader.hpp"
-#include "sys/movement.hpp"
+
+struct MoveActions {
+  inp::Action moveLeft;
+  inp::Action moveRight;
+  inp::Action moveUp;
+  inp::Action moveDown;
+};
+
+MoveActions s_move_flags;
 
 static gfx::Mesh s_mesh;
 static gfx::ShaderPipeline s_pipeline;
@@ -33,7 +40,7 @@ void Game::register_systems() {
   // Stage: Logic & State Machines
 
   // Stage: Physics & Movement
-  m_systems.push_back(std::make_unique<sys::MovementSystem>());
+  // m_systems.push_back(std::make_unique<sys::MovementSystem>());
 
   // Stage: Event Processing
 
@@ -62,10 +69,15 @@ bool Game::init() {
   s_object_ubo = gfx::create_uniform_buffer(sizeof(ObjectData));
   gfx::bind_uniform_buffer(s_object_ubo, 1);
 
-  inp::bind(inp::Action::MoveLeft, inp::Key::A);
-  inp::bind(inp::Action::MoveRight, inp::Key::D);
-  inp::bind(inp::Action::MoveUp, inp::Key::W);
-  inp::bind(inp::Action::MoveDown, inp::Key::S);
+  s_move_flags.moveLeft = inp::create_action("MoveLeft");
+  s_move_flags.moveRight = inp::create_action("MoveRight");
+  s_move_flags.moveUp = inp::create_action("MoveUp");
+  s_move_flags.moveDown = inp::create_action("MoveDown");
+
+  inp::bind_scancode(s_move_flags.moveLeft, "a");
+  inp::bind_scancode(s_move_flags.moveRight, "d");
+  inp::bind_scancode(s_move_flags.moveUp, "w", inp::Modifier::Ctrl);
+  inp::bind_scancode(s_move_flags.moveDown, "s");
 
   register_systems();
 
@@ -79,10 +91,10 @@ void Game::update(const float ts) {
     system->update(*m_active_scene, ts);
   }
 
-  if (inp::down(inp::Action::MoveLeft)) s_move_x -= ts;
-  if (inp::down(inp::Action::MoveRight)) s_move_x += ts;
-  if (inp::down(inp::Action::MoveDown)) s_move_y -= ts;
-  if (inp::down(inp::Action::MoveUp)) s_move_y += ts;
+  if (inp::down(s_move_flags.moveLeft)) s_move_x -= ts;
+  if (inp::down(s_move_flags.moveRight)) s_move_x += ts;
+  if (inp::pressed(s_move_flags.moveUp)) s_move_y += 0.1f;
+  if (inp::pressed(s_move_flags.moveDown)) s_move_y -= 0.1f;
 }
 
 void Game::render(const float alpha, const float aspect) {

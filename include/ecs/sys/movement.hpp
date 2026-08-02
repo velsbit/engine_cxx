@@ -1,5 +1,5 @@
 #pragma once
-#include "sys/system.hpp"
+#include "ecs/sys/system.hpp"
 
 namespace sys {
 

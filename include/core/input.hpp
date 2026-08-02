@@ -1,80 +1,146 @@
-// core/input.hpp
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "core/window.hpp"
 
 namespace inp {
-// clang-format off
-enum class Key : uint16_t {
-    Unknown = 0,
 
-    A, B, C, D, E, F, G, H, I, J, K, L, M,
-    N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+using ScanCode = uint16_t;
+constexpr ScanCode invalidScanCode = UINT16_MAX;
 
-    Num0, Num1, Num2, Num3, Num4,
-    Num5, Num6, Num7, Num8, Num9,
+using KeyCode = uint16_t;
+constexpr KeyCode invalidKeyCode = UINT16_MAX;
 
-    Space, Escape, Enter, Tab, Backspace,
-    Insert, Delete, Right, Left, Down, Up,
-    PageUp, PageDown, Home, End,
-    CapsLock, ScrollLock, NumLock, PrintScreen, Pause,
+using Action = uint32_t;
+constexpr Action invalidAction = UINT32_MAX;
 
-    LeftShift, LeftControl, LeftAlt, LeftSuper,
-    RightShift, RightControl, RightAlt, RightSuper,
-    Menu,
-
-    Apostrophe,   // '
-    Comma,        // ,
-    Minus,        // -
-    Period,       // .
-    Slash,        // /
-    Semicolon,    // ;
-    Equal,        // =
-    LeftBracket,  // [
-    Backslash,    // 
-    RightBracket, // ]
-    GraveAccent,  // `
-
-    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10,
-    F11, F12, F13, F14, F15, F16, F17, F18, F19, F20,
-    F21, F22, F23, F24, F25,
-
-    Kp0, Kp1, Kp2, Kp3, Kp4, Kp5, Kp6, Kp7, Kp8, Kp9,
-    KpDecimal, KpDivide, KpMultiply, KpSubtract, KpAdd,
-    KpEnter, KpEqual,
-
-    Count
+enum class Modifier : uint8_t {
+  None = 0,
+  Shift = 1 << 0,
+  Ctrl = 1 << 1,
+  Alt = 1 << 2,
+  Super = 1 << 3,
+  Any = 1 << 7
 };
-// clang-format on
 
-enum class Action : uint16_t {
-  MoveLeft,
-  MoveRight,
-  MoveUp,
-  MoveDown,
-  Jump,
-  Shoot,
+constexpr Modifier operator|(Modifier lhs, Modifier rhs) noexcept {
+  return static_cast<Modifier>(static_cast<uint8_t>(lhs) |
+                               static_cast<uint8_t>(rhs));
+}
 
-  Count
-};
+constexpr Modifier operator&(Modifier lhs, Modifier rhs) noexcept {
+  return static_cast<Modifier>(static_cast<uint8_t>(lhs) &
+                               static_cast<uint8_t>(rhs));
+}
+
+constexpr Modifier operator~(Modifier value) noexcept {
+  return static_cast<Modifier>(~static_cast<uint8_t>(value));
+}
+
+constexpr Modifier& operator|=(Modifier& lhs, Modifier rhs) noexcept {
+  return lhs = lhs | rhs;
+}
+
+constexpr Modifier& operator&=(Modifier& lhs, Modifier rhs) noexcept {
+  return lhs = lhs & rhs;
+}
+
+constexpr bool has_flag(Modifier value, Modifier flag) noexcept {
+  return (value & flag) != Modifier::None;
+}
 
 void init(const win::Window& window);
 void shutdown();
 
-void bind(Action action, Key key);
-void unbind(Action action, Key key);
+//------------------------------------------------------------------------------
+// Actions
+//------------------------------------------------------------------------------
+
+[[nodiscard]] Action create_action(std::string_view name);
+
+void clear_action(Action action);
+void clear_action(std::string_view name);
+
+[[nodiscard]] bool has_action(Action action);
+[[nodiscard]] bool has_action(std::string_view name);
+
+[[nodiscard]] Action find_action(std::string_view name);
+[[nodiscard]] std::string_view action_name(Action action);
+
+//------------------------------------------------------------------------------
+// Key / Scan code conversion
+//------------------------------------------------------------------------------
+
+[[nodiscard]] ScanCode scancode_from_string(std::string_view name);
+[[nodiscard]] std::string_view scancode_to_string(ScanCode scancode);
+
+[[nodiscard]] KeyCode keycode_from_string(std::string_view name);
+[[nodiscard]] std::string_view keycode_to_string(KeyCode keycode);
+
+[[nodiscard]] KeyCode keycode_from_scancode(ScanCode scancode);
+[[nodiscard]] ScanCode scancode_from_keycode(KeyCode keycode);
+
+[[nodiscard]] bool is_valid_scancode(ScanCode scancode);
+[[nodiscard]] bool is_valid_keycode(KeyCode keycode);
+
+//------------------------------------------------------------------------------
+// Bindings
+//------------------------------------------------------------------------------
+
+void bind_scancode(Action action, ScanCode scancode,
+                   Modifier modifier = Modifier::Any);
+void bind_scancode(Action action, std::string_view scancode_name,
+                   Modifier modifier = Modifier::Any);
+
+void unbind_scancode(Action action, ScanCode scancode,
+                     Modifier modifier = Modifier::Any);
+void unbind_scancode(Action action, std::string_view scancode_name,
+                     Modifier modifier = Modifier::Any);
+
+void bind_keycode(Action action, KeyCode keycode,
+                  Modifier modifier = Modifier::Any);
+void bind_keycode(Action action, std::string_view keycode_name,
+                  Modifier modifier = Modifier::Any);
+
+void unbind_keycode(Action action, KeyCode keycode,
+                    Modifier modifier = Modifier::Any);
+void unbind_keycode(Action action, std::string_view keycode_name,
+                    Modifier modifier = Modifier::Any);
+
+void unbind_all(Action action);
+
+[[nodiscard]] bool is_scancode_bound(Action action, ScanCode scancode,
+                                     Modifier modifier = Modifier::Any);
+[[nodiscard]] bool is_keycode_bound(Action action, KeyCode keycode,
+                                    Modifier modifier = Modifier::Any);
+
+//------------------------------------------------------------------------------
+// Input state
+//------------------------------------------------------------------------------
 
 void update();
-void post_fixed_update();
 
 [[nodiscard]] bool down(Action action);
 [[nodiscard]] bool pressed(Action action);
 [[nodiscard]] bool released(Action action);
+[[nodiscard]] bool repeated(Action action);
 
-// [[nodiscard]] bool down(Key key);
-// [[nodiscard]] bool pressed(Key key);
-// [[nodiscard]] bool released(Key key);
+//------------------------------------------------------------------------------
+// Bindings serialization
+//------------------------------------------------------------------------------
+
+[[nodiscard]] bool load_bindings(std::string_view path);
+[[nodiscard]] bool save_bindings(std::string_view path);
+
+//------------------------------------------------------------------------------
+// Reset
+//------------------------------------------------------------------------------
+
+void clear_bindings();
+void clear_actions();
 
 }  // namespace inp

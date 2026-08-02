@@ -65,9 +65,8 @@ void Engine::run() {
     t0 = std::chrono::high_resolution_clock::now();
     int current_frame_ticks = 0;
     while (accumulator >= dt) {
-      inp::update();
       game.update(static_cast<float>(dt));
-      inp::post_fixed_update();
+      inp::update();
 
       accumulator -= dt;
       current_frame_ticks++;

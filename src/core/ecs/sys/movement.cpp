@@ -1,7 +1,7 @@
-#include "sys/movement.hpp"
+#include "ecs/sys/movement.hpp"
 
-#include "cmp/position.hpp"
-#include "cmp/velocity.hpp"
+#include "ecs/cmp/position.hpp"
+#include "ecs/cmp/velocity.hpp"
 #include "scene/scene.hpp"
 
 namespace sys {

@@ -4,297 +4,465 @@
 
 #include <GLFW/glfw3.h>
 
+#include <algorithm>
 #include <array>
-#include <bitset>
-#include <cassert>
-#include <cstddef>
+#include <unordered_map>
+#include <vector>
 
 #include "core/window.hpp"
 
-namespace {
-
-constexpr uint32_t MAX_KEYS_PER_ACTION = 4;
-constexpr size_t ACTION_COUNT = static_cast<size_t>(inp::Action::Count);
-
-struct ActionKeyBinding {
-  inp::Key keys[MAX_KEYS_PER_ACTION]{};
-  uint32_t count = 0;
-};
-
-std::array<ActionKeyBinding, ACTION_COUNT> g_key_bindings{};
-
-std::bitset<ACTION_COUNT> g_current_state;
-std::bitset<ACTION_COUNT> g_previous_state;
-std::bitset<ACTION_COUNT> g_pressed_latch;
-std::bitset<ACTION_COUNT> g_released_latch;
-
-GLFWwindow* g_window = nullptr;
-
-int to_glfw_key(inp::Key key) {
-  static constexpr std::array<int, static_cast<size_t>(inp::Key::Count)>
-      k_key_map = [] {
-        std::array<int, static_cast<size_t>(inp::Key::Count)> map{};
-        map.fill(GLFW_KEY_UNKNOWN);
-
-        // Words (A-Z)
-        map[static_cast<size_t>(inp::Key::A)] = GLFW_KEY_A;
-        map[static_cast<size_t>(inp::Key::B)] = GLFW_KEY_B;
-        map[static_cast<size_t>(inp::Key::C)] = GLFW_KEY_C;
-        map[static_cast<size_t>(inp::Key::D)] = GLFW_KEY_D;
-        map[static_cast<size_t>(inp::Key::E)] = GLFW_KEY_E;
-        map[static_cast<size_t>(inp::Key::F)] = GLFW_KEY_F;
-        map[static_cast<size_t>(inp::Key::G)] = GLFW_KEY_G;
-        map[static_cast<size_t>(inp::Key::H)] = GLFW_KEY_H;
-        map[static_cast<size_t>(inp::Key::I)] = GLFW_KEY_I;
-        map[static_cast<size_t>(inp::Key::J)] = GLFW_KEY_J;
-        map[static_cast<size_t>(inp::Key::K)] = GLFW_KEY_K;
-        map[static_cast<size_t>(inp::Key::L)] = GLFW_KEY_L;
-        map[static_cast<size_t>(inp::Key::M)] = GLFW_KEY_M;
-        map[static_cast<size_t>(inp::Key::N)] = GLFW_KEY_N;
-        map[static_cast<size_t>(inp::Key::O)] = GLFW_KEY_O;
-        map[static_cast<size_t>(inp::Key::P)] = GLFW_KEY_P;
-        map[static_cast<size_t>(inp::Key::Q)] = GLFW_KEY_Q;
-        map[static_cast<size_t>(inp::Key::R)] = GLFW_KEY_R;
-        map[static_cast<size_t>(inp::Key::S)] = GLFW_KEY_S;
-        map[static_cast<size_t>(inp::Key::T)] = GLFW_KEY_T;
-        map[static_cast<size_t>(inp::Key::U)] = GLFW_KEY_U;
-        map[static_cast<size_t>(inp::Key::V)] = GLFW_KEY_V;
-        map[static_cast<size_t>(inp::Key::W)] = GLFW_KEY_W;
-        map[static_cast<size_t>(inp::Key::X)] = GLFW_KEY_X;
-        map[static_cast<size_t>(inp::Key::Y)] = GLFW_KEY_Y;
-        map[static_cast<size_t>(inp::Key::Z)] = GLFW_KEY_Z;
-
-        // Numbers
-        map[static_cast<size_t>(inp::Key::Num0)] = GLFW_KEY_0;
-        map[static_cast<size_t>(inp::Key::Num1)] = GLFW_KEY_1;
-        map[static_cast<size_t>(inp::Key::Num2)] = GLFW_KEY_2;
-        map[static_cast<size_t>(inp::Key::Num3)] = GLFW_KEY_3;
-        map[static_cast<size_t>(inp::Key::Num4)] = GLFW_KEY_4;
-        map[static_cast<size_t>(inp::Key::Num5)] = GLFW_KEY_5;
-        map[static_cast<size_t>(inp::Key::Num6)] = GLFW_KEY_6;
-        map[static_cast<size_t>(inp::Key::Num7)] = GLFW_KEY_7;
-        map[static_cast<size_t>(inp::Key::Num8)] = GLFW_KEY_8;
-        map[static_cast<size_t>(inp::Key::Num9)] = GLFW_KEY_9;
-
-        // Navigation an control
-        map[static_cast<size_t>(inp::Key::Space)] = GLFW_KEY_SPACE;
-        map[static_cast<size_t>(inp::Key::Escape)] = GLFW_KEY_ESCAPE;
-        map[static_cast<size_t>(inp::Key::Enter)] = GLFW_KEY_ENTER;
-        map[static_cast<size_t>(inp::Key::Tab)] = GLFW_KEY_TAB;
-        map[static_cast<size_t>(inp::Key::Backspace)] = GLFW_KEY_BACKSPACE;
-        map[static_cast<size_t>(inp::Key::Insert)] = GLFW_KEY_INSERT;
-        map[static_cast<size_t>(inp::Key::Delete)] = GLFW_KEY_DELETE;
-        map[static_cast<size_t>(inp::Key::Right)] = GLFW_KEY_RIGHT;
-        map[static_cast<size_t>(inp::Key::Left)] = GLFW_KEY_LEFT;
-        map[static_cast<size_t>(inp::Key::Down)] = GLFW_KEY_DOWN;
-        map[static_cast<size_t>(inp::Key::Up)] = GLFW_KEY_UP;
-        map[static_cast<size_t>(inp::Key::PageUp)] = GLFW_KEY_PAGE_UP;
-        map[static_cast<size_t>(inp::Key::PageDown)] = GLFW_KEY_PAGE_DOWN;
-        map[static_cast<size_t>(inp::Key::Home)] = GLFW_KEY_HOME;
-        map[static_cast<size_t>(inp::Key::End)] = GLFW_KEY_END;
-        map[static_cast<size_t>(inp::Key::CapsLock)] = GLFW_KEY_CAPS_LOCK;
-        map[static_cast<size_t>(inp::Key::ScrollLock)] = GLFW_KEY_SCROLL_LOCK;
-        map[static_cast<size_t>(inp::Key::NumLock)] = GLFW_KEY_NUM_LOCK;
-        map[static_cast<size_t>(inp::Key::PrintScreen)] = GLFW_KEY_PRINT_SCREEN;
-        map[static_cast<size_t>(inp::Key::Pause)] = GLFW_KEY_PAUSE;
-
-        // Modificators
-        map[static_cast<size_t>(inp::Key::LeftShift)] = GLFW_KEY_LEFT_SHIFT;
-        map[static_cast<size_t>(inp::Key::LeftControl)] = GLFW_KEY_LEFT_CONTROL;
-        map[static_cast<size_t>(inp::Key::LeftAlt)] = GLFW_KEY_LEFT_ALT;
-        map[static_cast<size_t>(inp::Key::LeftSuper)] = GLFW_KEY_LEFT_SUPER;
-        map[static_cast<size_t>(inp::Key::RightShift)] = GLFW_KEY_RIGHT_SHIFT;
-        map[static_cast<size_t>(inp::Key::RightControl)] =
-            GLFW_KEY_RIGHT_CONTROL;
-        map[static_cast<size_t>(inp::Key::RightAlt)] = GLFW_KEY_RIGHT_ALT;
-        map[static_cast<size_t>(inp::Key::RightSuper)] = GLFW_KEY_RIGHT_SUPER;
-        map[static_cast<size_t>(inp::Key::Menu)] = GLFW_KEY_MENU;
-
-        // Symbols
-        map[static_cast<size_t>(inp::Key::Apostrophe)] =
-            GLFW_KEY_APOSTROPHE;                                       // '
-        map[static_cast<size_t>(inp::Key::Comma)] = GLFW_KEY_COMMA;    // ,
-        map[static_cast<size_t>(inp::Key::Minus)] = GLFW_KEY_MINUS;    // -
-        map[static_cast<size_t>(inp::Key::Period)] = GLFW_KEY_PERIOD;  // .
-        map[static_cast<size_t>(inp::Key::Slash)] = GLFW_KEY_SLASH;    // /
-        map[static_cast<size_t>(inp::Key::Semicolon)] =
-            GLFW_KEY_SEMICOLON;                                      // ;
-        map[static_cast<size_t>(inp::Key::Equal)] = GLFW_KEY_EQUAL;  // =
-        map[static_cast<size_t>(inp::Key::LeftBracket)] =
-            GLFW_KEY_LEFT_BRACKET;  // [
-        map[static_cast<size_t>(inp::Key::Backslash)] =
-            GLFW_KEY_BACKSLASH;  // \
-            map[static_cast<size_t>(input::Key::RightBracket)] = GLFW_KEY_RIGHT_BRACKET; // ]
-        map[static_cast<size_t>(inp::Key::GraveAccent)] =
-            GLFW_KEY_GRAVE_ACCENT;  // `
-
-        // F1 - F25
-        map[static_cast<size_t>(inp::Key::F1)] = GLFW_KEY_F1;
-        map[static_cast<size_t>(inp::Key::F2)] = GLFW_KEY_F2;
-        map[static_cast<size_t>(inp::Key::F3)] = GLFW_KEY_F3;
-        map[static_cast<size_t>(inp::Key::F4)] = GLFW_KEY_F4;
-        map[static_cast<size_t>(inp::Key::F5)] = GLFW_KEY_F5;
-        map[static_cast<size_t>(inp::Key::F6)] = GLFW_KEY_F6;
-        map[static_cast<size_t>(inp::Key::F7)] = GLFW_KEY_F7;
-        map[static_cast<size_t>(inp::Key::F8)] = GLFW_KEY_F8;
-        map[static_cast<size_t>(inp::Key::F9)] = GLFW_KEY_F9;
-        map[static_cast<size_t>(inp::Key::F10)] = GLFW_KEY_F10;
-        map[static_cast<size_t>(inp::Key::F11)] = GLFW_KEY_F11;
-        map[static_cast<size_t>(inp::Key::F12)] = GLFW_KEY_F12;
-        map[static_cast<size_t>(inp::Key::F13)] = GLFW_KEY_F13;
-        map[static_cast<size_t>(inp::Key::F14)] = GLFW_KEY_F14;
-        map[static_cast<size_t>(inp::Key::F15)] = GLFW_KEY_F15;
-        map[static_cast<size_t>(inp::Key::F16)] = GLFW_KEY_F16;
-        map[static_cast<size_t>(inp::Key::F17)] = GLFW_KEY_F17;
-        map[static_cast<size_t>(inp::Key::F18)] = GLFW_KEY_F18;
-        map[static_cast<size_t>(inp::Key::F19)] = GLFW_KEY_F19;
-        map[static_cast<size_t>(inp::Key::F20)] = GLFW_KEY_F20;
-        map[static_cast<size_t>(inp::Key::F21)] = GLFW_KEY_F21;
-        map[static_cast<size_t>(inp::Key::F22)] = GLFW_KEY_F22;
-        map[static_cast<size_t>(inp::Key::F23)] = GLFW_KEY_F23;
-        map[static_cast<size_t>(inp::Key::F24)] = GLFW_KEY_F24;
-        map[static_cast<size_t>(inp::Key::F25)] = GLFW_KEY_F25;
-
-        // Numpad
-        map[static_cast<size_t>(inp::Key::Kp0)] = GLFW_KEY_KP_0;
-        map[static_cast<size_t>(inp::Key::Kp1)] = GLFW_KEY_KP_1;
-        map[static_cast<size_t>(inp::Key::Kp2)] = GLFW_KEY_KP_2;
-        map[static_cast<size_t>(inp::Key::Kp3)] = GLFW_KEY_KP_3;
-        map[static_cast<size_t>(inp::Key::Kp4)] = GLFW_KEY_KP_4;
-        map[static_cast<size_t>(inp::Key::Kp5)] = GLFW_KEY_KP_5;
-        map[static_cast<size_t>(inp::Key::Kp6)] = GLFW_KEY_KP_6;
-        map[static_cast<size_t>(inp::Key::Kp7)] = GLFW_KEY_KP_7;
-        map[static_cast<size_t>(inp::Key::Kp8)] = GLFW_KEY_KP_8;
-        map[static_cast<size_t>(inp::Key::Kp9)] = GLFW_KEY_KP_9;
-        map[static_cast<size_t>(inp::Key::KpDecimal)] = GLFW_KEY_KP_DECIMAL;
-        map[static_cast<size_t>(inp::Key::KpDivide)] = GLFW_KEY_KP_DIVIDE;
-        map[static_cast<size_t>(inp::Key::KpMultiply)] = GLFW_KEY_KP_MULTIPLY;
-        map[static_cast<size_t>(inp::Key::KpSubtract)] = GLFW_KEY_KP_SUBTRACT;
-        map[static_cast<size_t>(inp::Key::KpAdd)] = GLFW_KEY_KP_ADD;
-        map[static_cast<size_t>(inp::Key::KpEnter)] = GLFW_KEY_KP_ENTER;
-        map[static_cast<size_t>(inp::Key::KpEqual)] = GLFW_KEY_KP_EQUAL;
-
-        return map;
-      }();
-
-  auto index = static_cast<size_t>(key);
-  if (index >= k_key_map.size()) return GLFW_KEY_UNKNOWN;
-
-  return k_key_map[index];
-}
-
-}  // namespace
-
 namespace inp {
 
-void init(const win::Window& window) {
-  g_window = static_cast<GLFWwindow*>(win::get_native_window(window));
+enum class KeyFlags : uint8_t {
+  None = 0,
+  Down = 1 << 0,
+  Pressed = 1 << 1,
+  Released = 1 << 2,
+  Repeated = 1 << 3,
+};
 
-  g_current_state.reset();
-  g_previous_state.reset();
-  g_pressed_latch.reset();
-  g_released_latch.reset();
+struct ScanBinding {
+  ScanCode scancode = invalidScanCode;
+  Modifier modifier = Modifier::None;
+};
+
+struct KeyBinding {
+  KeyCode keycode = invalidKeyCode;
+  Modifier modifier = Modifier::None;
+};
+
+struct ActionState {
+  KeyFlags flags = KeyFlags::None;
+  std::vector<KeyBinding> keyBindings;
+  std::vector<ScanBinding> scanBindings;
+};
+
+struct ActionLookup {
+  Action action;
+  Modifier modifier;
+};
+
+constexpr KeyFlags operator|(KeyFlags lhs, KeyFlags rhs) noexcept {
+  return static_cast<KeyFlags>(static_cast<uint8_t>(lhs) |
+                               static_cast<uint8_t>(rhs));
 }
 
-void update() {
-  if (!g_window) return;
+constexpr KeyFlags operator&(KeyFlags lhs, KeyFlags rhs) noexcept {
+  return static_cast<KeyFlags>(static_cast<uint8_t>(lhs) &
+                               static_cast<uint8_t>(rhs));
+}
 
-  g_previous_state = g_current_state;
-  g_current_state.reset();
+constexpr KeyFlags operator~(KeyFlags value) noexcept {
+  return static_cast<KeyFlags>(~static_cast<uint8_t>(value));
+}
 
-  for (size_t i = 0; i < ACTION_COUNT; ++i) {
-    const auto& binding = g_key_bindings[i];
+constexpr KeyFlags& operator|=(KeyFlags& lhs, KeyFlags rhs) noexcept {
+  return lhs = lhs | rhs;
+}
 
-    for (uint32_t k = 0; k < binding.count; ++k) {
-      int glfw_key = to_glfw_key(binding.keys[k]);
-      if (glfw_key != GLFW_KEY_UNKNOWN &&
-          glfwGetKey(g_window, glfw_key) == GLFW_PRESS) {
-        g_current_state.set(i);
-        break;
-      }
-    }
+constexpr KeyFlags& operator&=(KeyFlags& lhs, KeyFlags rhs) noexcept {
+  return lhs = lhs & rhs;
+}
 
-    bool curr = g_current_state.test(i);
-    bool prev = g_previous_state.test(i);
+constexpr bool has_flag(KeyFlags value, KeyFlags flag) noexcept {
+  return (value & flag) != KeyFlags::None;
+}
 
-    if (curr && !prev) g_pressed_latch.set(i);
-    if (!curr && prev) g_released_latch.set(i);
+struct InputContext {
+  GLFWwindow* window = nullptr;
+
+  std::vector<ActionState> actionStates;
+  std::unordered_map<std::string_view, Action> actionLookup;
+
+  std::array<std::vector<ActionLookup>, GLFW_KEY_LAST + 1> keyMap;
+  std::unordered_map<ScanCode, std::vector<ActionLookup>> scanMap;
+};
+
+static InputContext g_context;
+
+static void update_state(KeyFlags& state, int action) {
+  switch (action) {
+    case GLFW_PRESS:
+      state &= ~KeyFlags::Released;
+
+      if (!has_flag(state, KeyFlags::Down)) state |= KeyFlags::Pressed;
+
+      state |= KeyFlags::Down;
+      break;
+
+    case GLFW_RELEASE:
+      state &= ~(KeyFlags::Down | KeyFlags::Repeated);
+      state |= KeyFlags::Released;
+      break;
+
+    case GLFW_REPEAT:
+      state &= ~KeyFlags::Released;
+      state |= KeyFlags::Down | KeyFlags::Repeated;
+      break;
   }
 }
 
-void post_fixed_update() {
-  g_pressed_latch.reset();
-  g_released_latch.reset();
+bool modifier_matches(Modifier binding, Modifier current) {
+  if (has_flag(binding, Modifier::Any)) return true;
+  return (current & binding) == binding;
+}
+
+// GLFW callback
+static void keyCallback(GLFWwindow*, int key, int scan, int action, int mods) {
+  Modifier current = static_cast<Modifier>(mods);
+
+  auto process_lookups = [&](const std::vector<ActionLookup>& lookups) {
+    for (const auto& lookup : lookups) {
+      if (modifier_matches(lookup.modifier, current)) {
+        update_state(g_context.actionStates[lookup.action].flags, action);
+      }
+    }
+  };
+
+  if (key >= 0 && key <= GLFW_KEY_LAST) {
+    process_lookups(g_context.keyMap[key]);
+  }
+
+  if (scan != static_cast<int>(invalidScanCode)) {
+    auto sc = static_cast<ScanCode>(scan);
+    if (auto it = g_context.scanMap.find(sc); it != g_context.scanMap.end()) {
+      process_lookups(it->second);
+    }
+  }
+}
+
+void init(const win::Window& window) {
+  g_context.window = static_cast<GLFWwindow*>(win::get_native_window(window));
+  clear_actions();
+
+  if (g_context.window) {
+    glfwSetKeyCallback(g_context.window, keyCallback);
+  }
 }
 
 void shutdown() {
-  g_window = nullptr;
-  g_key_bindings.fill({});
-
-  g_current_state.reset();
-  g_previous_state.reset();
-  g_pressed_latch.reset();
-  g_released_latch.reset();
-}
-
-void bind(Action action, Key key) {
-  auto idx = static_cast<size_t>(action);
-  assert(idx < ACTION_COUNT && "Action out of bounds!");
-  if (idx >= ACTION_COUNT) return;
-
-  auto& binding = g_key_bindings[idx];
-
-  if (binding.count >= MAX_KEYS_PER_ACTION) return;
-
-  for (uint32_t i = 0; i < binding.count; ++i) {
-    if (binding.keys[i] == key) return;
+  if (g_context.window) {
+    glfwSetKeyCallback(g_context.window, nullptr);
+    g_context.window = nullptr;
   }
 
-  binding.keys[binding.count++] = key;
+  clear_actions();
 }
 
-void unbind(Action action, Key key) {
-  auto idx = static_cast<size_t>(action);
-  assert(idx < ACTION_COUNT && "Action out of bounds!");
-  if (idx >= ACTION_COUNT) return;
+//------------------------------------------------------------------------------
+// Actions
+//------------------------------------------------------------------------------
 
-  auto& binding = g_key_bindings[idx];
+Action create_action(std::string_view name) {
+  if (auto it = g_context.actionLookup.find(name);
+      it != g_context.actionLookup.end()) {
+    return it->second;
+  }
 
-  for (uint32_t i = 0; i < binding.count; ++i) {
-    if (binding.keys[i] == key) {
-      for (uint32_t j = i + 1; j < binding.count; ++j) {
-        binding.keys[j - 1] = binding.keys[j];
-      }
-      binding.keys[--binding.count] = {};
-      return;
+  Action id = static_cast<Action>(g_context.actionStates.size());
+
+  g_context.actionStates.emplace_back();
+  g_context.actionLookup.emplace(name, id);
+
+  return id;
+}
+
+void clear_action(Action action) {
+  if (!has_action(action)) return;
+
+  unbind_all(action);
+  g_context.actionStates[action].flags = KeyFlags::None;
+
+  for (auto it = g_context.actionLookup.begin();
+       it != g_context.actionLookup.end(); ++it) {
+    if (it->second == action) {
+      g_context.actionLookup.erase(it);
+      break;
     }
   }
 }
 
-bool down(Action action) {
-  auto idx = static_cast<size_t>(action);
-  assert(idx < ACTION_COUNT && "Action out of bounds!");
-  if (idx >= ACTION_COUNT) return false;
-
-  return g_current_state.test(idx);
+void clear_action(std::string_view name) {
+  Action act = find_action(name);
+  if (act != invalidAction) {
+    clear_action(act);
+  }
 }
 
-bool pressed(Action action) {
-  auto idx = static_cast<size_t>(action);
-  assert(idx < ACTION_COUNT && "Action out of bounds!");
-  if (idx >= ACTION_COUNT) return false;
-
-  return g_pressed_latch.test(idx) ||
-         (g_current_state.test(idx) && !g_previous_state.test(idx));
+bool has_action(Action action) {
+  return action < g_context.actionStates.size();
 }
 
-bool released(Action action) {
-  auto idx = static_cast<size_t>(action);
-  assert(idx < ACTION_COUNT && "Action out of bounds!");
-  if (idx >= ACTION_COUNT) return false;
+bool has_action(std::string_view name) {
+  return find_action(name) != invalidAction;
+}
 
-  return g_released_latch.test(idx) ||
-         (!g_current_state.test(idx) && g_previous_state.test(idx));
+Action find_action(std::string_view name) {
+  auto it = g_context.actionLookup.find(name);
+  return it == g_context.actionLookup.end() ? invalidAction : it->second;
+}
+
+std::string_view action_name(Action action) {
+  if (!has_action(action)) return {};
+
+  for (const auto& [name, id] : g_context.actionLookup) {
+    if (id == action) return name;
+  }
+
+  return {};
+}
+
+//------------------------------------------------------------------------------
+// Key / Scan code conversion
+//------------------------------------------------------------------------------
+
+ScanCode scancode_from_string(std::string_view name) {
+  for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
+    const char* keyName = glfwGetKeyName(key, 0);
+    if (keyName && name == keyName) {
+      return static_cast<ScanCode>(glfwGetKeyScancode(key));
+    }
+  }
+  return invalidScanCode;
+}
+
+std::string_view scancode_to_string(ScanCode scancode) {
+  const char* name =
+      glfwGetKeyName(GLFW_KEY_UNKNOWN, static_cast<int>(scancode));
+  return name ? std::string_view{name} : std::string_view{};
+}
+
+KeyCode keycode_from_string(std::string_view name) {
+  for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
+    const char* keyName = glfwGetKeyName(key, 0);
+    if (keyName && name == keyName) {
+      return static_cast<KeyCode>(key);
+    }
+  }
+  return invalidKeyCode;
+}
+
+std::string_view keycode_to_string(KeyCode keycode) {
+  if (!is_valid_keycode(keycode)) return {};
+
+  const char* name = glfwGetKeyName(static_cast<int>(keycode), 0);
+  return name ? std::string_view{name} : std::string_view{};
+}
+
+KeyCode keycode_from_scancode(ScanCode scancode) {
+  for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
+    if (glfwGetKeyScancode(key) == static_cast<int>(scancode))
+      return static_cast<KeyCode>(key);
+  }
+
+  return invalidKeyCode;
+}
+
+ScanCode scancode_from_keycode(KeyCode keycode) {
+  if (!is_valid_keycode(keycode)) return invalidScanCode;
+
+  return static_cast<ScanCode>(glfwGetKeyScancode(static_cast<int>(keycode)));
+}
+
+[[nodiscard]] bool is_valid_scancode(ScanCode scancode) {
+  return scancode != invalidScanCode;
+}
+
+[[nodiscard]] bool is_valid_keycode(KeyCode keycode) {
+  return keycode != invalidKeyCode &&
+         static_cast<int>(keycode) <= GLFW_KEY_LAST;
+}
+
+//------------------------------------------------------------------------------
+// Bindings
+//------------------------------------------------------------------------------
+
+void bind_scancode(Action action, ScanCode scancode, Modifier modifier) {
+  if (!has_action(action) || !is_valid_scancode(scancode)) return;
+
+  auto& bindings = g_context.actionStates[action].scanBindings;
+  for (const auto& b : bindings) {
+    if (b.scancode == scancode && b.modifier == modifier) return;
+  }
+
+  bindings.push_back({scancode, modifier});
+  g_context.scanMap[scancode].push_back({action, modifier});
+}
+
+void bind_scancode(Action action, std::string_view name, Modifier modifier) {
+  bind_scancode(action, scancode_from_string(name), modifier);
+}
+
+void unbind_scancode(Action action, ScanCode scancode, Modifier modifier) {
+  if (!has_action(action) || !is_valid_scancode(scancode)) return;
+
+  if (auto it = g_context.scanMap.find(scancode);
+      it != g_context.scanMap.end()) {
+    std::erase_if(it->second, [&](const ActionLookup& lookup) {
+      return lookup.action == action && lookup.modifier == modifier;
+    });
+  }
+
+  std::erase_if(g_context.actionStates[action].scanBindings,
+                [&](const ScanBinding& b) {
+                  return b.scancode == scancode && b.modifier == modifier;
+                });
+}
+
+void unbind_scancode(Action action, std::string_view name, Modifier modifier) {
+  unbind_scancode(action, scancode_from_string(name), modifier);
+}
+
+void bind_keycode(Action action, KeyCode keycode, Modifier modifier) {
+  if (!has_action(action) || !is_valid_keycode(keycode)) return;
+
+  auto& bindings = g_context.actionStates[action].keyBindings;
+  for (const auto& b : bindings) {
+    if (b.keycode == keycode && b.modifier == modifier) return;
+  }
+
+  bindings.push_back({keycode, modifier});
+  g_context.keyMap[static_cast<size_t>(keycode)].push_back({action, modifier});
+}
+
+void bind_keycode(Action action, std::string_view name, Modifier modifier) {
+  bind_keycode(action, keycode_from_string(name), modifier);
+}
+
+void unbind_keycode(Action action, KeyCode keycode, Modifier modifier) {
+  if (!has_action(action) || !is_valid_keycode(keycode)) return;
+
+  auto& map = g_context.keyMap[static_cast<size_t>(keycode)];
+  std::erase_if(map, [&](const ActionLookup& lookup) {
+    return lookup.action == action && lookup.modifier == modifier;
+  });
+
+  std::erase_if(g_context.actionStates[action].keyBindings,
+                [&](const KeyBinding& b) {
+                  return b.keycode == keycode && b.modifier == modifier;
+                });
+}
+
+void unbind_keycode(Action action, std::string_view name, Modifier modifier) {
+  unbind_keycode(action, keycode_from_string(name), modifier);
+}
+
+void unbind_all(Action action) {
+  if (!has_action(action)) return;
+
+  auto& state = g_context.actionStates[action];
+
+  for (const auto& binding : state.keyBindings) {
+    if (is_valid_keycode(binding.keycode)) {
+      auto& map = g_context.keyMap[static_cast<size_t>(binding.keycode)];
+      std::erase_if(map, [&](const ActionLookup& lookup) {
+        return lookup.action == action && lookup.modifier == binding.modifier;
+      });
+    }
+  }
+
+  for (const auto& binding : state.scanBindings) {
+    if (is_valid_scancode(binding.scancode)) {
+      if (auto it = g_context.scanMap.find(binding.scancode);
+          it != g_context.scanMap.end()) {
+        std::erase_if(it->second, [&](const ActionLookup& lookup) {
+          return lookup.action == action && lookup.modifier == binding.modifier;
+        });
+      }
+    }
+  }
+
+  state.keyBindings.clear();
+  state.scanBindings.clear();
+}
+
+bool is_scancode_bound(Action action, ScanCode scancode, Modifier modifier) {
+  if (!has_action(action)) return false;
+
+  const auto& bindings = g_context.actionStates[action].scanBindings;
+  return std::any_of(bindings.begin(), bindings.end(),
+                     [&](const ScanBinding& b) {
+                       return b.scancode == scancode && b.modifier == modifier;
+                     });
+}
+
+bool is_keycode_bound(Action action, KeyCode keycode, Modifier modifier) {
+  if (!has_action(action)) return false;
+
+  const auto& bindings = g_context.actionStates[action].keyBindings;
+  return std::any_of(bindings.begin(), bindings.end(),
+                     [&](const KeyBinding& b) {
+                       return b.keycode == keycode && b.modifier == modifier;
+                     });
+}
+
+std::vector<ScanBinding> scancode_bindings(Action action) {
+  if (!has_action(action)) return {};
+  return g_context.actionStates[action].scanBindings;
+}
+
+std::vector<KeyBinding> keycode_bindings(Action action) {
+  if (!has_action(action)) return {};
+  return g_context.actionStates[action].keyBindings;
+}
+
+//------------------------------------------------------------------------------
+// Input state
+//------------------------------------------------------------------------------
+
+void update() {
+  for (auto& state : g_context.actionStates) {
+    state.flags &=
+        ~(KeyFlags::Pressed | KeyFlags::Released | KeyFlags::Repeated);
+  }
+}
+
+static bool check_flag(Action action, KeyFlags flag) {
+  if (!has_action(action)) return false;
+  return has_flag(g_context.actionStates[action].flags, flag);
+}
+
+bool down(Action action) { return check_flag(action, KeyFlags::Down); }
+bool pressed(Action action) { return check_flag(action, KeyFlags::Pressed); }
+bool released(Action action) { return check_flag(action, KeyFlags::Released); }
+bool repeated(Action action) { return check_flag(action, KeyFlags::Repeated); }
+
+//------------------------------------------------------------------------------
+// Bindings serialization
+//------------------------------------------------------------------------------
+
+bool load_bindings(std::string_view path) {
+  (void)path;
+  return false;
+}
+
+bool save_bindings(std::string_view path) {
+  (void)path;
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// Reset
+//------------------------------------------------------------------------------
+
+void clear_bindings() {
+  for (auto& state : g_context.actionStates) {
+    state.scanBindings.clear();
+    state.keyBindings.clear();
+  }
+
+  g_context.scanMap.clear();
+
+  for (auto& map : g_context.keyMap) {
+    map.clear();
+  }
+}
+
+void clear_actions() {
+  clear_bindings();
+
+  g_context.actionStates.clear();
+  g_context.actionLookup.clear();
 }
 
 }  // namespace inp

@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include "ecs/sys/system.hpp"
 #include "scene/scene.hpp"
-#include "sys/system.hpp"
 
 class Game {
  public:
