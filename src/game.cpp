@@ -1,12 +1,15 @@
 #include "game.hpp"
 
+#include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "core/input.hpp"
 #include "gfx/primitives.hpp"
 #include "gfx/shader.hpp"
+#include "input/action.hpp"
+#include "input/binding.hpp"
 
 struct MoveActions {
   inp::Action moveLeft;
@@ -50,7 +53,9 @@ void Game::register_systems() {
 bool Game::init() {
   m_active_scene = std::make_unique<Scene>();
 
-  s_mesh = msh::generate_primitive(msh::cfg::Star{});
+  s_mesh = msh::generate_primitive(msh::cfg::Circle{
+      .segments = 8,
+  });
 
   auto vert = gfx::create_shader_stage(gfx::ShaderStageBit::VertexBit,
                                        "shaders/shader.vert.spv");
@@ -74,10 +79,10 @@ bool Game::init() {
   s_move_flags.moveUp = inp::create_action("MoveUp");
   s_move_flags.moveDown = inp::create_action("MoveDown");
 
-  inp::bind_scancode(s_move_flags.moveLeft, "a");
-  inp::bind_scancode(s_move_flags.moveRight, "d");
-  inp::bind_scancode(s_move_flags.moveUp, "w", inp::Modifier::Ctrl);
-  inp::bind_scancode(s_move_flags.moveDown, "s");
+  inp::bind(inp::KeyCode{GLFW_KEY_A}, s_move_flags.moveLeft);
+  inp::bind(inp::KeyCode{GLFW_KEY_D}, s_move_flags.moveRight);
+  inp::bind(inp::KeyCode{GLFW_KEY_W}, s_move_flags.moveUp);
+  inp::bind(inp::KeyCode{GLFW_KEY_S}, s_move_flags.moveDown);
 
   register_systems();
 
@@ -93,8 +98,8 @@ void Game::update(const float ts) {
 
   if (inp::down(s_move_flags.moveLeft)) s_move_x -= ts;
   if (inp::down(s_move_flags.moveRight)) s_move_x += ts;
-  if (inp::pressed(s_move_flags.moveUp)) s_move_y += 0.1f;
-  if (inp::pressed(s_move_flags.moveDown)) s_move_y -= 0.1f;
+  if (inp::pressed(s_move_flags.moveUp)) s_move_y += 0.2f;
+  if (inp::down(s_move_flags.moveDown)) s_move_y -= ts;
 }
 
 void Game::render(const float alpha, const float aspect) {
