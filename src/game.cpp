@@ -1,7 +1,5 @@
 #include "game.hpp"
 
-#include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -79,10 +77,10 @@ bool Game::init() {
   s_move_flags.moveUp = inp::create_action("MoveUp");
   s_move_flags.moveDown = inp::create_action("MoveDown");
 
-  inp::bind(inp::KeyCode{GLFW_KEY_A}, s_move_flags.moveLeft);
-  inp::bind(inp::KeyCode{GLFW_KEY_D}, s_move_flags.moveRight);
-  inp::bind(inp::KeyCode{GLFW_KEY_W}, s_move_flags.moveUp);
-  inp::bind(inp::KeyCode{GLFW_KEY_S}, s_move_flags.moveDown);
+  inp::bind(inp::Key::A, s_move_flags.moveLeft);
+  inp::bind(inp::Key::D, s_move_flags.moveRight);
+  inp::bind(inp::Key::W, s_move_flags.moveUp);
+  inp::bind(inp::Key::S, s_move_flags.moveDown);
 
   register_systems();
 
@@ -90,16 +88,21 @@ bool Game::init() {
 }
 
 void Game::update(const float ts) {
-  if (!m_active_scene) return;
+  if (!m_active_scene)
+    return;
 
-  for (auto& system : m_systems) {
+  for (auto &system : m_systems) {
     system->update(*m_active_scene, ts);
   }
 
-  if (inp::down(s_move_flags.moveLeft)) s_move_x -= ts;
-  if (inp::down(s_move_flags.moveRight)) s_move_x += ts;
-  if (inp::pressed(s_move_flags.moveUp)) s_move_y += 0.2f;
-  if (inp::down(s_move_flags.moveDown)) s_move_y -= ts;
+  if (inp::down(s_move_flags.moveLeft))
+    s_move_x -= ts;
+  if (inp::down(s_move_flags.moveRight))
+    s_move_x += ts;
+  if (inp::down(s_move_flags.moveUp))
+    s_move_y += ts;
+  if (inp::down(s_move_flags.moveDown))
+    s_move_y -= ts;
 }
 
 void Game::render(const float alpha, const float aspect) {

@@ -11,7 +11,7 @@ struct Action {
   uint16_t index{0};
   uint16_t gen{0};
 
-  constexpr auto operator<=>(const Action&) const = default;
+  constexpr auto operator<=>(const Action &) const = default;
 
   [[nodiscard]]
   constexpr explicit operator bool() const noexcept {
@@ -30,4 +30,4 @@ void destroy_action(Action) noexcept;
 
 [[nodiscard]] std::string_view get_action_name(Action) noexcept;
 
-}  // namespace inp
+} // namespace inp

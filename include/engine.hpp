@@ -1,12 +1,12 @@
 #pragma once
 
 class Engine {
- public:
+public:
   Engine() {}
   ~Engine() {}
 
-  Engine(const Engine&) = delete;
-  Engine& operator=(const Engine&) = delete;
+  Engine(const Engine &) = delete;
+  Engine &operator=(const Engine &) = delete;
 
   void run();
 };

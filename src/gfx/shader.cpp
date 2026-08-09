@@ -11,59 +11,59 @@ namespace gfx {
 
 constexpr GLenum to_gl_type(ShaderStageBit stage) {
   switch (stage) {
-    case ShaderStageBit::VertexBit:
-      return GL_VERTEX_SHADER;
-    case ShaderStageBit::FragmentBit:
-      return GL_FRAGMENT_SHADER;
-    case ShaderStageBit::GeometryBit:
-      return GL_GEOMETRY_SHADER;
-    case ShaderStageBit::TessControlBit:
-      return GL_TESS_CONTROL_SHADER;
-    case ShaderStageBit::TessEvaluationBit:
-      return GL_TESS_EVALUATION_SHADER;
-    case ShaderStageBit::ComputeBit:
-      return GL_COMPUTE_SHADER;
+  case ShaderStageBit::VertexBit:
+    return GL_VERTEX_SHADER;
+  case ShaderStageBit::FragmentBit:
+    return GL_FRAGMENT_SHADER;
+  case ShaderStageBit::GeometryBit:
+    return GL_GEOMETRY_SHADER;
+  case ShaderStageBit::TessControlBit:
+    return GL_TESS_CONTROL_SHADER;
+  case ShaderStageBit::TessEvaluationBit:
+    return GL_TESS_EVALUATION_SHADER;
+  case ShaderStageBit::ComputeBit:
+    return GL_COMPUTE_SHADER;
   }
   throw std::runtime_error("Unknown shader stage bit");
 }
 
 constexpr GLbitfield to_gl_bit(ShaderStageBit stage) {
   switch (stage) {
-    case ShaderStageBit::VertexBit:
-      return GL_VERTEX_SHADER_BIT;
-    case ShaderStageBit::FragmentBit:
-      return GL_FRAGMENT_SHADER_BIT;
-    case ShaderStageBit::GeometryBit:
-      return GL_GEOMETRY_SHADER_BIT;
-    case ShaderStageBit::TessControlBit:
-      return GL_TESS_CONTROL_SHADER_BIT;
-    case ShaderStageBit::TessEvaluationBit:
-      return GL_TESS_EVALUATION_SHADER_BIT;
-    case ShaderStageBit::ComputeBit:
-      return GL_COMPUTE_SHADER_BIT;
+  case ShaderStageBit::VertexBit:
+    return GL_VERTEX_SHADER_BIT;
+  case ShaderStageBit::FragmentBit:
+    return GL_FRAGMENT_SHADER_BIT;
+  case ShaderStageBit::GeometryBit:
+    return GL_GEOMETRY_SHADER_BIT;
+  case ShaderStageBit::TessControlBit:
+    return GL_TESS_CONTROL_SHADER_BIT;
+  case ShaderStageBit::TessEvaluationBit:
+    return GL_TESS_EVALUATION_SHADER_BIT;
+  case ShaderStageBit::ComputeBit:
+    return GL_COMPUTE_SHADER_BIT;
   }
   throw std::runtime_error("Unknown shader stage bit");
 }
 
 constexpr std::string_view to_string(ShaderStageBit stage) {
   switch (stage) {
-    case ShaderStageBit::VertexBit:
-      return "Vertex";
-    case ShaderStageBit::FragmentBit:
-      return "Fragment";
-    case ShaderStageBit::GeometryBit:
-      return "Geometry";
-    case ShaderStageBit::TessControlBit:
-      return "TessControl";
-    case ShaderStageBit::TessEvaluationBit:
-      return "TessEvaluation";
-    case ShaderStageBit::ComputeBit:
-      return "Compute";
+  case ShaderStageBit::VertexBit:
+    return "Vertex";
+  case ShaderStageBit::FragmentBit:
+    return "Fragment";
+  case ShaderStageBit::GeometryBit:
+    return "Geometry";
+  case ShaderStageBit::TessControlBit:
+    return "TessControl";
+  case ShaderStageBit::TessEvaluationBit:
+    return "TessEvaluation";
+  case ShaderStageBit::ComputeBit:
+    return "Compute";
   }
   return "Unknown";
 }
 
-std::vector<uint32_t> load_spirv(const char* path) {
+std::vector<uint32_t> load_spirv(const char *path) {
   std::ifstream file(path, std::ios::binary | std::ios::ate);
 
   if (!file) {
@@ -80,7 +80,7 @@ std::vector<uint32_t> load_spirv(const char* path) {
 
   std::vector<uint32_t> spirv(static_cast<size_t>(size) / sizeof(uint32_t));
 
-  if (!file.read(reinterpret_cast<char*>(spirv.data()), size)) {
+  if (!file.read(reinterpret_cast<char *>(spirv.data()), size)) {
     throw std::runtime_error("Failed to read SPIR-V file");
   }
 
@@ -121,7 +121,7 @@ void check_program(uint32_t program) {
   throw std::runtime_error(log.data());
 }
 
-ShaderStage create_shader_stage(ShaderStageBit stageBit, const char* spvPath) {
+ShaderStage create_shader_stage(ShaderStageBit stageBit, const char *spvPath) {
   const GLenum shaderType = to_gl_type(stageBit);
   const std::vector<uint32_t> spirv = load_spirv(spvPath);
 
@@ -134,7 +134,7 @@ ShaderStage create_shader_stage(ShaderStageBit stageBit, const char* spvPath) {
 
   try {
     check_shader(shader);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     glDeleteShader(shader);
     throw std::runtime_error(std::string(to_string(stageBit)) +
                              " shader error: " + e.what());
@@ -165,13 +165,13 @@ ShaderPipeline create_shader_pipeline() {
   return pipeline;
 }
 
-void attach_shader_stage(const ShaderPipeline& pipeline,
-                         const ShaderStage& stage) {
+void attach_shader_stage(const ShaderPipeline &pipeline,
+                         const ShaderStage &stage) {
   glUseProgramStages(pipeline.pipelineID, to_gl_bit(stage.stageBit),
                      stage.programID);
 }
 
-void use_shader_pipeline(const ShaderPipeline& pipeline) {
+void use_shader_pipeline(const ShaderPipeline &pipeline) {
   glBindProgramPipeline(pipeline.pipelineID);
 }
 
@@ -191,7 +191,7 @@ void bind_uniform_buffer(uint32_t ubo_id, uint32_t binding_point) {
 }
 
 void update_uniform_buffer(uint32_t ubo_id, uint32_t byte_offset, uint32_t size,
-                           const void* data) {
+                           const void *data) {
   glBindBuffer(GL_UNIFORM_BUFFER, ubo_id);
   glBufferSubData(GL_UNIFORM_BUFFER, byte_offset, size, data);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -203,7 +203,7 @@ void destroy_uniform_buffer(uint32_t ubo_id) {
   }
 }
 
-void destroy_shader_stage(ShaderStage& stage) {
+void destroy_shader_stage(ShaderStage &stage) {
   if (stage.programID == 0) {
     return;
   }
@@ -213,7 +213,7 @@ void destroy_shader_stage(ShaderStage& stage) {
   stage.stageBit = ShaderStageBit::VertexBit;
 }
 
-void destroy_shader_pipeline(ShaderPipeline& pipeline) {
+void destroy_shader_pipeline(ShaderPipeline &pipeline) {
   if (pipeline.pipelineID == 0) {
     return;
   }
@@ -222,4 +222,4 @@ void destroy_shader_pipeline(ShaderPipeline& pipeline) {
   pipeline.pipelineID = 0;
 }
 
-}  // namespace gfx
+} // namespace gfx

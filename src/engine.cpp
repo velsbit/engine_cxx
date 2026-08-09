@@ -107,7 +107,8 @@ void Engine::run() {
     ++frames;
     timer += frame_time;
 
-    if (timer < 1.0) continue;
+    if (timer < 1.0)
+      continue;
 
     const double fps = frames / timer;
     const double frame_ms = timer / frames * 1000.0;

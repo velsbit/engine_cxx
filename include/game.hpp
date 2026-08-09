@@ -7,14 +7,14 @@
 #include "scene/scene.hpp"
 
 class Game {
- public:
+public:
   Game() = default;
   ~Game() = default;
 
-  Game(const Game&) = delete;
-  Game& operator=(const Game&) = delete;
-  Game(Game&&) = delete;
-  Game& operator=(Game&&) = delete;
+  Game(const Game &) = delete;
+  Game &operator=(const Game &) = delete;
+  Game(Game &&) = delete;
+  Game &operator=(Game &&) = delete;
 
   bool init();
   void shutdown();
@@ -22,7 +22,7 @@ class Game {
   void update(const float ts);
   void render(const float alpha, const float aspect);
 
- private:
+private:
   std::unique_ptr<Scene> m_active_scene;
   std::vector<std::unique_ptr<sys::ISystem>> m_systems;
   std::vector<std::unique_ptr<sys::IRenderSystem>> m_render_systems;

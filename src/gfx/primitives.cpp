@@ -27,8 +27,8 @@ constexpr VertexAttribute kAttributes[] = {
     },
 };
 
-Mesh create_mesh_from_data(const VertexStream* streams, uint32_t stream_count,
-                           const uint32_t* indices, uint32_t index_count,
+Mesh create_mesh_from_data(const VertexStream *streams, uint32_t stream_count,
+                           const uint32_t *indices, uint32_t index_count,
                            uint32_t vertex_count) {
   MeshSource source{
       .streams = streams,
@@ -46,9 +46,9 @@ Mesh create_mesh_from_data(const VertexStream* streams, uint32_t stream_count,
   return create_mesh(compile_mesh(source, layout));
 }
 
-}  // namespace
+} // namespace
 
-Mesh generate_primitive(const cfg::Quad& config) {
+Mesh generate_primitive(const cfg::Quad &config) {
   const float hw = config.width * 0.5f;
   const float hh = config.height * 0.5f;
 
@@ -82,7 +82,7 @@ Mesh generate_primitive(const cfg::Quad& config) {
   return create_mesh_from_data(streams, 2, indices, 6, 4);
 }
 
-Mesh generate_primitive(const cfg::Circle& config) {
+Mesh generate_primitive(const cfg::Circle &config) {
   const uint32_t segments = std::max(config.segments, 3u);
 
   std::vector<float> positions;
@@ -138,7 +138,7 @@ Mesh generate_primitive(const cfg::Circle& config) {
                                static_cast<uint32_t>(positions.size() / 2));
 }
 
-Mesh generate_primitive(const cfg::Star& config) {
+Mesh generate_primitive(const cfg::Star &config) {
   const uint32_t points = std::max(config.points, 2u);
 
   std::vector<float> positions;
@@ -199,4 +199,4 @@ Mesh generate_primitive(const cfg::Star& config) {
                                static_cast<uint32_t>(positions.size() / 2));
 }
 
-}  // namespace msh
+} // namespace msh

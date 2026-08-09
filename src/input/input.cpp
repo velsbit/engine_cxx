@@ -7,7 +7,7 @@
 
 namespace inp {
 
-void init(const win::Window& window) noexcept {
+void init(const win::Window &window) noexcept {
   backend::init();
   backend::set_window(window);
 }
@@ -19,4 +19,4 @@ void end_frame() noexcept { update_devices(); }
 
 void on_key_event(KeyCode key, bool down) noexcept { set_key(key, down); }
 
-}  // namespace inp
+} // namespace inp

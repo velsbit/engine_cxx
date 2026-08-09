@@ -28,16 +28,18 @@ constexpr bool is_valid_key(KeyCode key) noexcept {
   return key.value < kMaxKeyCodes;
 }
 
-}  // namespace
+} // namespace
 
 void set_key(KeyCode key, bool down) noexcept {
-  if (!is_valid_key(key)) return;
+  if (!is_valid_key(key))
+    return;
 
-  auto& state = g_keys[key.value];
+  auto &state = g_keys[key.value];
 
   const bool was_down = (state & Down) != 0;
 
-  if (was_down == down) return;
+  if (was_down == down)
+    return;
 
   if (down) {
     state |= Down;
@@ -49,27 +51,30 @@ void set_key(KeyCode key, bool down) noexcept {
 }
 
 void update_devices() noexcept {
-  for (auto& state : g_keys) {
+  for (auto &state : g_keys) {
     state &= ~(Pressed | Released);
   }
 }
 
 bool key_down(KeyCode key) noexcept {
-  if (!is_valid_key(key)) return false;
+  if (!is_valid_key(key))
+    return false;
 
   return (g_keys[key.value] & Down) != 0;
 }
 
 bool key_pressed(KeyCode key) noexcept {
-  if (!is_valid_key(key)) return false;
+  if (!is_valid_key(key))
+    return false;
 
   return (g_keys[key.value] & Pressed) != 0;
 }
 
 bool key_released(KeyCode key) noexcept {
-  if (!is_valid_key(key)) return false;
+  if (!is_valid_key(key))
+    return false;
 
   return (g_keys[key.value] & Released) != 0;
 }
 
-}  // namespace inp
+} // namespace inp

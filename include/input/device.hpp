@@ -12,13 +12,13 @@ namespace inp {
 struct KeyCode {
   uint16_t value = 0;
 
-  constexpr auto operator<=>(const KeyCode&) const = default;
+  constexpr auto operator<=>(const KeyCode &) const = default;
 };
 
 struct ScanCode {
   uint16_t value = 0;
 
-  constexpr auto operator<=>(const ScanCode&) const = default;
+  constexpr auto operator<=>(const ScanCode &) const = default;
 };
 
 // Mouse
@@ -26,7 +26,7 @@ struct ScanCode {
 struct MouseButton {
   uint8_t value = 0;
 
-  constexpr auto operator<=>(const MouseButton&) const = default;
+  constexpr auto operator<=>(const MouseButton &) const = default;
 };
 
 // Gamepad
@@ -34,13 +34,13 @@ struct MouseButton {
 struct GamepadButton {
   uint16_t value = 0;
 
-  constexpr auto operator<=>(const GamepadButton&) const = default;
+  constexpr auto operator<=>(const GamepadButton &) const = default;
 };
 
 struct GamepadAxis {
   uint16_t value = 0;
 
-  constexpr auto operator<=>(const GamepadAxis&) const = default;
+  constexpr auto operator<=>(const GamepadAxis &) const = default;
 };
 
-}  // namespace inp
+} // namespace inp

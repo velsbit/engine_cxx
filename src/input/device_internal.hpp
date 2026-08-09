@@ -13,4 +13,4 @@ bool key_down(KeyCode key) noexcept;
 bool key_pressed(KeyCode key) noexcept;
 bool key_released(KeyCode key) noexcept;
 
-}  // namespace inp
+} // namespace inp

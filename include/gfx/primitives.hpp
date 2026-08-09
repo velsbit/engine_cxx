@@ -24,10 +24,10 @@ struct Star {
   float inner_radius = 0.3f;
 };
 
-}  // namespace cfg
+} // namespace cfg
 
-gfx::Mesh generate_primitive(const cfg::Quad& config = cfg::Quad{});
-gfx::Mesh generate_primitive(const cfg::Circle& config);
-gfx::Mesh generate_primitive(const cfg::Star& config);
+gfx::Mesh generate_primitive(const cfg::Quad &config = cfg::Quad{});
+gfx::Mesh generate_primitive(const cfg::Circle &config);
+gfx::Mesh generate_primitive(const cfg::Star &config);
 
-}  // namespace msh
+} // namespace msh

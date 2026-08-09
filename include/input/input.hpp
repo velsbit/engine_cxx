@@ -12,7 +12,7 @@ namespace inp {
 
 // Lifetime
 
-void init(const win::Window& window) noexcept;
+void init(const win::Window &window) noexcept;
 void shutdown() noexcept;
 
 void begin_frame() noexcept;
@@ -29,4 +29,4 @@ void on_key_event(KeyCode key, bool down) noexcept;
 // void on_gamepad_button_event(...);
 // void on_gamepad_axis_event(...);
 
-}  // namespace inp
+} // namespace inp
