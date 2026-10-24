@@ -39,6 +39,21 @@ add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
 add_subdirectory(external/entt)
 
+# --- STB (FetchContent) ---
+
+include(FetchContent)
+
+FetchContent_Declare(
+    stb
+    URL https://github.com/nothings/stb/archive/refs/heads/master.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+FetchContent_MakeAvailable(stb)
+
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+
 # --- Main Project ---
 
 file(GLOB_RECURSE PROJECT_SOURCES "src/*.cpp" "src/*.c")
@@ -55,6 +70,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm::glm
     EnTT::EnTT
+    stb
 )
 
 # --- SPIR-V Shader Compile for OpenGL ---

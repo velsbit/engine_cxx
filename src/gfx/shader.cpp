@@ -127,8 +127,12 @@ ShaderStage create_shader_stage(ShaderStageBit stageBit, const char *spvPath) {
 
   const uint32_t shader = glCreateShader(shaderType);
 
-  glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(),
-                 static_cast<GLsizei>(spirv.size() * sizeof(uint32_t)));
+  glShaderBinary(
+      1,
+      &shader,
+      GL_SHADER_BINARY_FORMAT_SPIR_V,
+      spirv.data(),
+      static_cast<GLsizei>(spirv.size() * sizeof(uint32_t)));
 
   glSpecializeShader(shader, "main", 0, nullptr, nullptr);
 
@@ -165,10 +169,13 @@ ShaderPipeline create_shader_pipeline() {
   return pipeline;
 }
 
-void attach_shader_stage(const ShaderPipeline &pipeline,
-                         const ShaderStage &stage) {
-  glUseProgramStages(pipeline.pipelineID, to_gl_bit(stage.stageBit),
-                     stage.programID);
+void attach_shader_stage(
+    const ShaderPipeline &pipeline,
+    const ShaderStage &stage) {
+  glUseProgramStages(
+      pipeline.pipelineID,
+      to_gl_bit(stage.stageBit),
+      stage.programID);
 }
 
 void use_shader_pipeline(const ShaderPipeline &pipeline) {
@@ -190,8 +197,11 @@ void bind_uniform_buffer(uint32_t ubo_id, uint32_t binding_point) {
   glBindBufferBase(GL_UNIFORM_BUFFER, binding_point, ubo_id);
 }
 
-void update_uniform_buffer(uint32_t ubo_id, uint32_t byte_offset, uint32_t size,
-                           const void *data) {
+void update_uniform_buffer(
+    uint32_t ubo_id,
+    uint32_t byte_offset,
+    uint32_t size,
+    const void *data) {
   glBindBuffer(GL_UNIFORM_BUFFER, ubo_id);
   glBufferSubData(GL_UNIFORM_BUFFER, byte_offset, size, data);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);

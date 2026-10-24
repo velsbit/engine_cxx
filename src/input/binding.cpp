@@ -28,7 +28,8 @@ bool contains(const std::vector<T> &vec, const T &value) noexcept {
   return std::find(vec.begin(), vec.end(), value) != vec.end();
 }
 
-template <typename T> void erase(std::vector<T> &vec, const T &value) noexcept {
+template <typename T>
+void erase(std::vector<T> &vec, const T &value) noexcept {
   vec.erase(std::remove(vec.begin(), vec.end(), value), vec.end());
 }
 

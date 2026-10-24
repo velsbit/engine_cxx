@@ -4,10 +4,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "ecs/sys/movement.hpp"
+#include "ecs/sys/system.hpp"
 #include "gfx/primitives.hpp"
 #include "gfx/shader.hpp"
-#include "input/action.hpp"
+#include "gfx/texture.hpp"
 #include "input/binding.hpp"
+
+namespace {
 
 struct MoveActions {
   inp::Action moveLeft;
@@ -18,12 +22,15 @@ struct MoveActions {
 
 MoveActions s_move_flags;
 
-static gfx::Mesh s_mesh;
-static gfx::ShaderPipeline s_pipeline;
-static uint32_t s_object_ubo;
-static uint32_t s_camera_ubo;
-static float s_move_x;
-static float s_move_y;
+uint32_t s_object_ubo;
+uint32_t s_camera_ubo;
+float s_move_x;
+float s_move_y;
+sys::System s_movement_system_id;
+
+gfx::Texture s_test_texture;
+gfx::Mesh s_mesh;
+gfx::ShaderPipeline s_pipeline;
 
 struct CameraData {
   glm::mat4 view_projection;
@@ -33,27 +40,12 @@ struct ObjectData {
   glm::mat4 model;
 };
 
-void Game::register_systems() {
-  // Stage: Input (External)
+} // namespace
 
-  // Stage: AI Logic (Internal)
+namespace game {
 
-  // Stage: Logic & State Machines
-
-  // Stage: Physics & Movement
-  // m_systems.push_back(std::make_unique<sys::MovementSystem>());
-
-  // Stage: Event Processing
-
-  // Stage: Cleanup & Lifecycle
-}
-
-bool Game::init() {
-  m_active_scene = std::make_unique<Scene>();
-
-  s_mesh = msh::generate_primitive(msh::cfg::Circle{
-      .segments = 8,
-  });
+bool init() {
+  s_mesh = msh::generate_primitive();
 
   auto vert = gfx::create_shader_stage(gfx::ShaderStageBit::VertexBit,
                                        "shaders/shader.vert.spv");
@@ -72,6 +64,12 @@ bool Game::init() {
   s_object_ubo = gfx::create_uniform_buffer(sizeof(ObjectData));
   gfx::bind_uniform_buffer(s_object_ubo, 1);
 
+  s_test_texture = gfx::load_texture("../assets/textures/grid.jpg");
+  if (s_test_texture.id == 0) {
+    std::cerr << "Failed to load debug texture!\n";
+    return false;
+  }
+
   s_move_flags.moveLeft = inp::create_action("MoveLeft");
   s_move_flags.moveRight = inp::create_action("MoveRight");
   s_move_flags.moveUp = inp::create_action("MoveUp");
@@ -82,19 +80,15 @@ bool Game::init() {
   inp::bind(inp::Key::W, s_move_flags.moveUp);
   inp::bind(inp::Key::S, s_move_flags.moveDown);
 
-  register_systems();
+  inp::bind(inp::Key::LeftArrow, s_move_flags.moveLeft);
+  inp::bind(inp::Key::RightArrow, s_move_flags.moveRight);
+  inp::bind(inp::Key::UpArrow, s_move_flags.moveUp);
+  inp::bind(inp::Key::DownArrow, s_move_flags.moveDown);
 
   return true;
 }
 
-void Game::update(const float ts) {
-  if (!m_active_scene)
-    return;
-
-  for (auto &system : m_systems) {
-    system->update(*m_active_scene, ts);
-  }
-
+void update(const float ts) {
   if (inp::down(s_move_flags.moveLeft))
     s_move_x -= ts;
   if (inp::down(s_move_flags.moveRight))
@@ -105,11 +99,13 @@ void Game::update(const float ts) {
     s_move_y -= ts;
 }
 
-void Game::render(const float alpha, const float aspect) {
+void render(const float alpha, const float aspect) {
   gfx::use_shader_pipeline(s_pipeline);
+  gfx::bind_texture(s_test_texture, 0);
 
-  CameraData camera{.view_projection =
-                        glm::ortho(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f)};
+  CameraData camera{
+      .view_projection = glm::ortho(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f),
+  };
 
   gfx::update_uniform_buffer(s_camera_ubo, camera);
 
@@ -125,12 +121,12 @@ void Game::render(const float alpha, const float aspect) {
   gfx::draw_mesh(s_mesh);
 }
 
-void Game::shutdown() {
+void shutdown() {
+  gfx::destroy_texture(s_test_texture);
   gfx::destroy_uniform_buffer(s_camera_ubo);
   gfx::destroy_uniform_buffer(s_object_ubo);
   gfx::destroy_shader_pipeline(s_pipeline);
   gfx::destroy_mesh(s_mesh);
-
-  m_systems.clear();
-  m_active_scene.reset();
 }
+
+} // namespace game

@@ -2,16 +2,20 @@
 
 #include <entt/entt.hpp>
 
-class Scene {
- public:
-  Scene() = default;
-  ~Scene() = default;
+struct Tilemap {
+  int width = 0;
+  int height = 0;
+  std::vector<int> tiles;
+};
 
-  void init();
+struct Canvas {
+};
 
-  entt::registry& get_registry() { return m_registry; }
-  const entt::registry& get_registry() const { return m_registry; }
+struct Scene {
+  entt::registry registry;
+  Tilemap tilemap;
+  Canvas canvasUI;
 
- private:
-  entt::registry m_registry;
+  std::string name;
+  float time_accumulator = 0.0f;
 };

@@ -12,11 +12,19 @@ void init(const win::Window &window) noexcept {
   backend::set_window(window);
 }
 
-void shutdown() noexcept { backend::shutdown(); }
+void shutdown() noexcept {
+  backend::shutdown();
+}
 
-void begin_frame() noexcept { backend::poll_events(); }
-void end_frame() noexcept { update_devices(); }
+void begin_frame() noexcept {
+  backend::poll_events();
+}
+void end_frame() noexcept {
+  update_devices();
+}
 
-void on_key_event(KeyCode key, bool down) noexcept { set_key(key, down); }
+void on_key_event(KeyCode key, bool down) noexcept {
+  set_key(key, down);
+}
 
 } // namespace inp

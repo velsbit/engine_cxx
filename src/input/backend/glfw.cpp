@@ -10,13 +10,13 @@ namespace {
 
 GLFWwindow *g_window = nullptr;
 
-KeyCode translate_key(int key) { return KeyCode{static_cast<uint16_t>(key)}; }
+KeyCode to_keycode(int key) { return KeyCode{static_cast<uint16_t>(key)}; }
 
 void key_callback(GLFWwindow *, int key, int, int action, int) {
   if (action == GLFW_PRESS) {
-    inp::on_key_event(translate_key(key), true);
+    inp::on_key_event(to_keycode(key), true);
   } else if (action == GLFW_RELEASE) {
-    inp::on_key_event(translate_key(key), false);
+    inp::on_key_event(to_keycode(key), false);
   }
 }
 

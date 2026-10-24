@@ -3,9 +3,6 @@
 
 namespace sys {
 
-class MovementSystem : public ISystem {
- public:
-  void update(Scene& scene, const float ts) override;
-};
+void movement(Scene &scene, float ts) noexcept;
 
-}  // namespace sys
+} // namespace sys
