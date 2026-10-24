@@ -27,7 +27,7 @@ inline ShaderStageBit operator&(ShaderStageBit a, ShaderStageBit b) {
 
 struct ShaderStage {
   uint32_t programID = 0;
-  ShaderStageBit stageBit;
+  ShaderStageBit stageBit = ShaderStageBit::None;
 };
 
 struct ShaderPipeline {

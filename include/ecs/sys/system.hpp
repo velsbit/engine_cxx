@@ -1,21 +1,19 @@
 #pragma once
 
+#include <cstdint>
 #include <scene/scene.hpp>
+#include <string_view>
+#include <vector>
 
 namespace sys {
 
-class ISystem {
- public:
-  virtual ~ISystem() = default;
-
-  virtual void update(Scene& scene, const float ts) = 0;
+struct System {
+  std::string_view name;
+  void (*update)(Scene &, float) noexcept;
 };
 
-class IRenderSystem {
- public:
-  virtual ~IRenderSystem() = default;
+using Pipeline = std::vector<System *>;
 
-  virtual void update(Scene& scene, const float alpha) = 0;
-};
+const System *find_system_by_name(std::string_view name) noexcept;
 
-}  // namespace sys
+} // namespace sys

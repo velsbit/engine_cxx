@@ -27,9 +27,10 @@ constexpr VertexAttribute kAttributes[] = {
     },
 };
 
-Mesh create_mesh_from_data(const VertexStream *streams, uint32_t stream_count,
-                           const uint32_t *indices, uint32_t index_count,
-                           uint32_t vertex_count) {
+Mesh create_mesh_from_data(
+    const VertexStream *streams, uint32_t stream_count,
+    const uint32_t *indices, uint32_t index_count,
+    uint32_t vertex_count) {
   MeshSource source{
       .streams = streams,
       .stream_count = stream_count,
@@ -53,15 +54,34 @@ Mesh generate_primitive(const cfg::Quad &config) {
   const float hh = config.height * 0.5f;
 
   const float positions[] = {
-      -hw, -hh, hw, -hh, hw, hh, -hw, hh,
+      -hw,
+      -hh,
+      hw,
+      -hh,
+      hw,
+      hh,
+      -hw,
+      hh,
   };
 
   const float uvs[] = {
-      0.f, 0.f, 1.f, 0.f, 1.f, 1.f, 0.f, 1.f,
+      0.f,
+      0.f,
+      1.f,
+      0.f,
+      1.f,
+      1.f,
+      0.f,
+      1.f,
   };
 
   const uint32_t indices[] = {
-      0, 1, 2, 2, 3, 0,
+      0,
+      1,
+      2,
+      2,
+      3,
+      0,
   };
 
   VertexStream streams[] = {
@@ -133,9 +153,10 @@ Mesh generate_primitive(const cfg::Circle &config) {
       },
   };
 
-  return create_mesh_from_data(streams, 2, indices.data(),
-                               static_cast<uint32_t>(indices.size()),
-                               static_cast<uint32_t>(positions.size() / 2));
+  return create_mesh_from_data(
+      streams, 2, indices.data(),
+      static_cast<uint32_t>(indices.size()),
+      static_cast<uint32_t>(positions.size() / 2));
 }
 
 Mesh generate_primitive(const cfg::Star &config) {
@@ -194,9 +215,10 @@ Mesh generate_primitive(const cfg::Star &config) {
       },
   };
 
-  return create_mesh_from_data(streams, 2, indices.data(),
-                               static_cast<uint32_t>(indices.size()),
-                               static_cast<uint32_t>(positions.size() / 2));
+  return create_mesh_from_data(
+      streams, 2, indices.data(),
+      static_cast<uint32_t>(indices.size()),
+      static_cast<uint32_t>(positions.size() / 2));
 }
 
 } // namespace msh
